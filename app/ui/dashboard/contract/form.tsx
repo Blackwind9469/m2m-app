@@ -10,13 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { tr } from "date-fns/locale";
 import addContract from "@/app/actions/contract/add";
 import editContract from "@/app/actions/contract/edit";
 import { ContractData } from "@/app/types/contract";
@@ -30,17 +25,10 @@ import {
   FormItem,
   FormLabel,
   FormControl,
-  FormDescription,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-
 const requiredMessage = "Boş bırakmayınız !";
 const FormSchema = z.object({
   sim_id: z.string({ message: requiredMessage }),
@@ -48,7 +36,6 @@ const FormSchema = z.object({
   device_id: z.string({ message: requiredMessage }),
   type: z.string({ message: requiredMessage }),
   license_plate: z.string({ message: requiredMessage }),
-  created_at: z.string({ message: requiredMessage }),
   start: z.date({ message: requiredMessage }),
   finish: z.date({ message: requiredMessage }),
 });
@@ -177,42 +164,12 @@ const ContractForm = ({
       device_id: contract?.device_id,
       type: contract?.type,
       license_plate: contract?.license_plate,
-      start: contract?.start,
-      finish: contract?.finish,
+      start: contract?.start ? new Date(contract.start) : undefined,
+      finish: contract?.finish ? new Date(contract.finish) : undefined,
     },
   });
 
-  const clientAction = async (values: any) => {
-    setLoading(true);
-    let errorX: any = {};
-    if (edit) {
-      const id: any = contract?.id;
-      const { data, error } = await editContract(values, id);
-      errorX = error;
-      setLoading(false);
-    } else {
-      const { data, error } = await addContract(values);
-      errorX = error;
-      setLoading(false);
-    }
-    if (errorX) {
-      toast({
-        variant: "destructive",
-        title: "Sözleşmeler",
-        description: errorX,
-      });
-    } else {
-      toast({
-        title: "Sözleşmeler",
-        description: "İşlem Başarılı",
-      });
-      router.push("/dashboard/contracts");
-    }
-  };
-
-  function onSubmit(values: z.infer<typeof FormSchema>) {
-    clientAction(values);
-  }
+  
 
   const getUserNameById = (id: string) => {
     const user = users.find((user) => user.id === id);
@@ -230,6 +187,64 @@ const ContractForm = ({
     const sim = sims.find((sim) => sim.id === id);
     return sim ? sim.serial : "";
   };
+  const clientAction = async (values: z.infer<typeof FormSchema>) => {
+    console.log("clientAction started");
+    setLoading(true);
+    console.log("Form Values:", JSON.stringify(values, (key, value) => {
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    }, 2));
+
+    // Save form values to localStorage
+    try {
+      localStorage.setItem('lastFormSubmission', JSON.stringify(values, (key, value) => {
+        if (value instanceof Date) {
+          return value.toISOString();
+        }
+        return value;
+      }));
+      console.log("Form values saved to localStorage");
+
+      let result;
+      if (edit) {
+        const id: any = contract?.id;
+        console.log("Calling editContract");
+        result = await editContract(values, id);
+      } else {
+        console.log("Calling addContract");
+        result = await addContract(values);
+      }
+      console.log("Contract operation result:", result);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      console.log("Contract operation successful");
+      toast({
+        title: "Sözleşmeler",
+        description: "İşlem Başarılı",
+      });
+      router.push("/dashboard/contracts");
+    } catch (error) {
+      console.error("Error in contract operation:", error);
+      toast({
+        variant: "destructive",
+        title: "Sözleşmeler",
+        description: "An error occurred",
+      });
+    } finally {
+      setLoading(false);
+      console.log("clientAction finished");
+    }
+  };
+
+  function onSubmit(values: z.infer<typeof FormSchema>) {
+    console.log("Form submitted. Calling clientAction...");
+    clientAction(values);
+  }
+  console.log("Form errors:", form.formState.errors);
 
   return (
     <Card x-chunk='dashboard-05-chunk-3'>
@@ -243,7 +258,10 @@ const ContractForm = ({
       <CardContent>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => {
+              console.log("Form submit event triggered");
+              form.handleSubmit(onSubmit)(e);
+            }} 
             className='w-2/3 space-y-6'
           >
            <FormField
@@ -369,98 +387,54 @@ const ContractForm = ({
                 )}
               />
               <FormField
-                control={form.control}
-                name='start'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col'>
-                    <FormLabel>Sözleşme Başlangıcı</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd-MM-yyyy")
-                            ) : (
-                              <span>Tarih Seçiniz</span>
-                            )}
-                            <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className='w-auto p-0' align='start'>
-                        <Calendar
-                          mode='single'
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      Bu alanda sözleşme başlangıç tarihi seçilecektir
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='finish'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col'>
-                    <FormLabel>Sözleşme Bitişi</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd-MM-yyyy")
-                            ) : (
-                              <span>Tarih Seçiniz</span>
-                            )}
-                            <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className='w-auto p-0' align='start'>
-                        <Calendar
-                          mode='single'
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      Bu alanda sözleşme bitiş tarihi seçilecektir
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              control={form.control}
+              name='start'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sözleşme Başlangıcı</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        console.log("Start date changed:", e.target.value);
+                        field.onChange(new Date(e.target.value));
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <Button disabled={loading ? true : false} type='submit'>
-              {loading ? (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              ) : null}
+            <FormField
+              control={form.control}
+              name='finish'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sözleşme Bitişi</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        console.log("Finish date changed:", e.target.value);
+                        field.onChange(new Date(e.target.value));
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button 
+              disabled={loading} 
+              type='submit'
+              onClick={() => console.log("Submit button clicked")}
+            >
+              {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
               {edit ? "Güncelle" : "Ekle"}
             </Button>
           </form>
