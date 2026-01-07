@@ -1,0 +1,23 @@
+import { Metadata } from "next";
+import Form from "@/app/ui/dashboard/contract/form";
+import getContractRow from "@/app/actions/contract/get_row";
+import updateUsedStatus from "@/app/actions/contract/update_used_status";
+
+export const metadata: Metadata = {
+  title: "Sözleşme Düzenle",
+};
+
+export default async function Page({ params }: { params: { id: string } }) {
+  const id = params.id;
+  const { contract, error } = await getContractRow(id);
+
+  if (contract && contract.sim_id && contract.device_id) {
+    await updateUsedStatus(contract.sim_id, contract.device_id, false);
+  }
+
+  return (
+    <div className='grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2'>
+      <Form contract={contract} edit={true} />
+    </div>
+  );
+}

@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String     @id @default(uuid())
+  name       String
+  phone      String
+  deleted    Boolean
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  customers  Customer[]
+}
+
+model Sim {
+  id         String     @id @default(uuid())
+  deleted    Boolean
+  serial     String     @unique
+  gsmno      String     @unique
+  tariff     String
+  used       Boolean
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  contracts  Contract[]
+}
+
+model Customer {
+  id         String     @id @default(uuid())
+  deleted    Boolean
+  name       String
+  serial     String     @unique
+  represent  String
+  contact    String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  staff      User       @relation(fields: [represent], references: [id])
+  contracts  Contract[]
+}
+
+model Device {
+  id         String     @id @default(uuid())
+  deleted    Boolean
+  type       String
+  serial     String     @unique
+  used       Boolean
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  contracts  Contract[]
+}
+
+model Contract {
+  id            String   @id @default(uuid())
+  deleted       Boolean
+  sim_id        String
+  hat           Sim      @relation(fields: [sim_id], references: [id])
+  customer_id   String
+  firma         Customer @relation(fields: [customer_id], references: [id])
+  device_id     String
+  cihaz         Device   @relation(fields: [device_id], references: [id])
+  type          String
+  license_plate String   @unique
+  start         DateTime
+  finish        DateTime
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([sim_id, customer_id, device_id])
+}
