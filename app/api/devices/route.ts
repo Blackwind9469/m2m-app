@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export async function GET() {
   try {
     const devices = await prisma.device.findMany({
-      where: { deleted: false },
+      where: { deleted: false, used: false},
           select: {
             id: true,
             serial: true,

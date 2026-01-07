@@ -27,7 +27,7 @@ export function DatePicker() {
         <Calendar
         locale={tr}
           mode="single"
-          captionLayout="dropdown-buttons"
+          captionLayout="dropdown"
           selected={date}
           onSelect={setDate}
           fromYear={2024}

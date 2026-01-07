@@ -32,21 +32,21 @@ export default function SideNav() {
                 <span className='sr-only'>Anasayfa</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side='right'>Anasayfa</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href='/dashboard/contracts'
+                href='/dashboard'
                 className='flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8'
               >
-                <Package2 className='h-5 w-5 transition-all group-hover:scale-110' />
-                <span className='sr-only'>Sözleşmeler</span>
+                <LineChart className='h-5 w-5' />
+                <span className='sr-only'>Raporlar</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side='right'>Sözleşmeler</TooltipContent>
+            <TooltipContent side='right'>Raporlar</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -109,18 +109,19 @@ export default function SideNav() {
             <TooltipContent side='right'>Müşteriler</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href='/dashboard'
+                href='/dashboard/contracts'
                 className='flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8'
               >
-                <LineChart className='h-5 w-5' />
-                <span className='sr-only'>Analytics</span>
+                <Package2 className='h-5 w-5 transition-all group-hover:scale-110' />
+                <span className='sr-only'>Sözleşmeler</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side='right'>Analytics</TooltipContent>
+            <TooltipContent side='right'>Sözleşmeler</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </nav>

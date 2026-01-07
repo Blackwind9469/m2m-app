@@ -8,6 +8,7 @@ async function getDeviceList(): Promise<DeviceList> {
         const result = await db.device.findMany({
             where:{
                 deleted: false,
+                used: false,
             },
             orderBy: {
                 created_at: "desc",

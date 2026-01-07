@@ -8,6 +8,7 @@ async function getSimList(): Promise<SimList> {
         const result = await db.sim.findMany({
             where:{
                 deleted: false,
+                used: false,
             },
             orderBy: {
                 created_at: "desc",

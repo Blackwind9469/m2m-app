@@ -9,12 +9,17 @@ async function getContractRow(id: string): Promise<ContractRow> {
             where:{
                 id: id
             },
+            include: {
+                hat: true,
+                cihaz: true
+            }
         });
 
         return { contract : result };
     } catch (err) {
+        console.error("Error in getContractRow:", err);
         return {
-            error: "Error",
+            error: "Error fetching contract",
         };
     }
 }

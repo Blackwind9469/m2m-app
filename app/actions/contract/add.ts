@@ -1,7 +1,6 @@
 'use server';
 
 import { db } from "@/lib/db";
-
 import { ContractData } from "@/app/types/contract";
 import { revalidatePath } from "next/cache";
 
@@ -9,12 +8,12 @@ interface Result{
   data?: ContractData ;
   error?: string;
 }
-
 async function addContract( values: any ) : Promise <Result>{
 
   try{
     const result = await db.contract.create(
       {
+        
         data: {
           sim_id: values.sim_id,
           device_id: values.device_id,
@@ -27,6 +26,15 @@ async function addContract( values: any ) : Promise <Result>{
         }
       }
     );
+    await db.sim.update({
+      where: { id: values.sim_id },
+      data: { used: true },
+    });
+
+    await db.device.update({
+      where: { id: values.device_id },
+      data: { used: true },
+    });
     revalidatePath("/dashboard/contracts");    
     return{
       data: result

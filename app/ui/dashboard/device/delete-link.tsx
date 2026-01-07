@@ -39,7 +39,7 @@ export default function DeleteLink({ id }: { id: string }) {
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger>
+      <AlertDialogTrigger asChild>
         <Button variant='outline' size='icon'>
           <Trash2 className='h-4 w-4' />
         </Button>
@@ -54,8 +54,8 @@ export default function DeleteLink({ id }: { id: string }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>İptal</AlertDialogCancel>
-          <AlertDialogAction>
-            <button onClick={() => deleteAction(id)}>Evet</button>
+          <AlertDialogAction onClick={() => deleteAction(id)}>
+            Evet
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
